@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { uploadToPinata } from "@/config/pinata";
+import { SEPOLIA_CHAIN_ID } from "@/config/contract";
 import { toast } from "@/hooks/use-toast";
-
 interface AddEvidenceProps {
   contract: any;
 }
@@ -50,6 +50,26 @@ export const AddEvidence = ({ contract }: AddEvidenceProps) => {
         title: "Adding to Blockchain",
         description: "Step 2/2: Adding evidence to blockchain...",
       });
+
+      // Ensure we're on Sepolia before sending the transaction
+      try {
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (currentChainId !== SEPOLIA_CHAIN_ID) {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: SEPOLIA_CHAIN_ID }],
+          });
+        }
+      } catch (switchErr) {
+        console.error('Network switch failed before tx:', switchErr);
+        toast({
+          title: "Wrong Network",
+          description: "Please switch to Sepolia testnet and try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
       const tx = await contract.addEvidence(caseId, description, ipfsHash);
       await tx.wait();

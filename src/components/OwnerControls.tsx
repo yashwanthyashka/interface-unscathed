@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ethers } from "ethers";
 import { toast } from "@/hooks/use-toast";
-
+import { SEPOLIA_CHAIN_ID } from "@/config/contract";
 interface OwnerControlsProps {
   contract: any;
   onRoleChange: () => void;
@@ -43,6 +43,19 @@ export const OwnerControls = ({ contract, onRoleChange }: OwnerControlsProps) =>
         title: "Granting Role",
         description: `Granting ${role} role...`,
       });
+
+      // Ensure Sepolia network before sending tx
+      try {
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (currentChainId !== SEPOLIA_CHAIN_ID) {
+          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_CHAIN_ID }] });
+        }
+      } catch (switchErr) {
+        console.error('Network switch failed before tx:', switchErr);
+        toast({ title: 'Wrong Network', description: 'Please switch to Sepolia testnet and try again.', variant: 'destructive' });
+        setLoading(null);
+        return;
+      }
 
       const tx = role === 'police' 
         ? await contract.grantPoliceRole(address)
@@ -85,6 +98,19 @@ export const OwnerControls = ({ contract, onRoleChange }: OwnerControlsProps) =>
         title: "Revoking Role",
         description: `Revoking ${role} role...`,
       });
+
+      // Ensure Sepolia network before sending tx
+      try {
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (currentChainId !== SEPOLIA_CHAIN_ID) {
+          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_CHAIN_ID }] });
+        }
+      } catch (switchErr) {
+        console.error('Network switch failed before tx:', switchErr);
+        toast({ title: 'Wrong Network', description: 'Please switch to Sepolia testnet and try again.', variant: 'destructive' });
+        setLoading(null);
+        return;
+      }
 
       const tx = role === 'police'
         ? await contract.revokePoliceRole(address)

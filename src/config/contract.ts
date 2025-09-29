@@ -10,7 +10,7 @@ export const SEPOLIA_NETWORK = {
     symbol: "ETH",
     decimals: 18,
   },
-  rpcUrls: ["https://sepolia.infura.io/v3/"],
+  rpcUrls: ["https://rpc.sepolia.org"],
   blockExplorerUrls: ["https://sepolia.etherscan.io/"],
 };
 

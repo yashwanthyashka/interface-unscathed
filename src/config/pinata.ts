@@ -2,8 +2,8 @@
 // IMPORTANT: Do NOT commit this file to a public repository!
 // If using Git, make sure to add this file to your .gitignore file.
 
-export const PINATA_API_KEY = process.env.VITE_PINATA_API_KEY || "PASTE_YOUR_PINATA_API_KEY_HERE";
-export const PINATA_SECRET_API_KEY = process.env.VITE_PINATA_SECRET_API_KEY || "PASTE_YOUR_PINATA_SECRET_API_KEY_HERE";
+export const PINATA_API_KEY = (import.meta as any).env?.VITE_PINATA_API_KEY || "PASTE_YOUR_PINATA_API_KEY_HERE";
+export const PINATA_SECRET_API_KEY = (import.meta as any).env?.VITE_PINATA_SECRET_API_KEY || "PASTE_YOUR_PINATA_SECRET_API_KEY_HERE";
 
 export const uploadToPinata = async (file: File): Promise<string> => {
   if (!PINATA_API_KEY || !PINATA_SECRET_API_KEY || PINATA_API_KEY.includes("PASTE")) {
