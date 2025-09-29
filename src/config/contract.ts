@@ -1,5 +1,19 @@
 export const contractAddress = "0x7E62c3c810628d1717E9B364490B99CD8fF7dA5a";
 
+// Sepolia Testnet Configuration
+export const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111 in hex
+export const SEPOLIA_NETWORK = {
+  chainId: SEPOLIA_CHAIN_ID,
+  chainName: "Sepolia Test Network",
+  nativeCurrency: {
+    name: "SepoliaETH",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: ["https://sepolia.infura.io/v3/"],
+  blockExplorerUrls: ["https://sepolia.etherscan.io/"],
+};
+
 export const contractABI = [
   {
     "inputs": [],

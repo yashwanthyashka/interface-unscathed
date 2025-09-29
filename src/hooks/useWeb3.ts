@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { contractAddress, contractABI } from '@/config/contract';
+import { contractAddress, contractABI, SEPOLIA_CHAIN_ID, SEPOLIA_NETWORK } from '@/config/contract';
 import { Web3State } from '@/types/web3';
 import { toast } from '@/hooks/use-toast';
 
@@ -36,14 +36,68 @@ export const useWeb3 = () => {
     return true;
   };
 
+  const switchToSepolia = async () => {
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: SEPOLIA_CHAIN_ID }],
+      });
+      return true;
+    } catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [SEPOLIA_NETWORK],
+          });
+          return true;
+        } catch (addError) {
+          console.error("Error adding Sepolia network:", addError);
+          toast({
+            title: "Network Error",
+            description: "Failed to add Sepolia network to MetaMask",
+            variant: "destructive",
+          });
+          return false;
+        }
+      } else {
+        console.error("Error switching to Sepolia:", switchError);
+        toast({
+          title: "Network Switch Failed", 
+          description: "Please manually switch to Sepolia testnet in MetaMask",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+  };
+
   const connectWallet = useCallback(async () => {
     if (!checkMetaMask()) return;
 
     setIsLoading(true);
     try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
+      // First request account access
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
       
+      // Check current network
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      
+      if (chainId !== SEPOLIA_CHAIN_ID) {
+        toast({
+          title: "Wrong Network",
+          description: "Switching to Sepolia testnet...",
+        });
+        
+        const switched = await switchToSepolia();
+        if (!switched) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const userAddress = await signer.getAddress();
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
@@ -59,7 +113,7 @@ export const useWeb3 = () => {
 
       toast({
         title: "Wallet Connected",
-        description: "Successfully connected to MetaMask!",
+        description: "Successfully connected to Sepolia testnet!",
       });
 
       // Check user roles
@@ -106,8 +160,15 @@ export const useWeb3 = () => {
         window.location.reload();
       });
 
-      // Listen for chain changes
-      window.ethereum.on('chainChanged', () => {
+      // Listen for chain changes - check if still on Sepolia
+      window.ethereum.on('chainChanged', (chainId: string) => {
+        if (chainId !== SEPOLIA_CHAIN_ID && web3State.isConnected) {
+          toast({
+            title: "Network Changed",
+            description: "Please switch back to Sepolia testnet",
+            variant: "destructive",
+          });
+        }
         window.location.reload();
       });
     }
@@ -118,7 +179,7 @@ export const useWeb3 = () => {
         window.ethereum.removeAllListeners('chainChanged');
       }
     };
-  }, []);
+  }, [web3State.isConnected]);
 
   return {
     ...web3State,
